@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Schmidt Hammer Results Dashboard</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+    <style>
+        /* --- Reset & Core Styles --- */
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        :root {
+            /* Refined Color Palette */
+            --primary-color: #005f73; /* Deep Cerulean Blue */
+            --primary-hover: #0a9396; /* Lighter Teal for hover */
+            --primary-light: #e9f5f6; /* Very Light Blue */
+            --secondary-color: #343a40; /* Dark Gray */
+            --accent-color: #ee9b00; /* Amber/Orange Accent */
+            --light-gray: #f8f9fa; /* Off White */
+            --medium-gray: #dee2e6; /* Light Gray for borders */
+            --dark-gray: #495057; /* Medium Dark Gray Text */
+            --white: #ffffff;
+            --danger-color: #d00000; /* Strong Red */
+            --danger-light: #fff1f1;
+            --success-color: #2a9d8f; /* Teal Green */
+            --success-light: #eaf7f6;
+            --warning-color: #ffba08; /* Yellow/Orange */
+            --text-color: #212529; /* Near Black for body text */
+            --label-color: #6c757d; /* Gray for labels */
+            --text-muted: #88929b; /* Lighter Gray */
+
+            /* Typography & Spacing */
+            --font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            --font-size-base: 1rem; /* 16px */
+            --font-size-sm: 0.875rem; /* 14px */
+            --font-size-lg: 1.25rem; /* 20px */
+            --line-height-base: 1.6;
+            --spacing-xs: 0.25rem; /* 4px */
+            --spacing-sm: 0.5rem;  /* 8px */
+            --spacing-md: 1rem;    /* 16px */
+            --spacing-lg: 1.5rem;  /* 24px */
+            --spacing-xl: 2rem;    /* 32px */
+
+            /* UI Elements */
+            --border-radius: 8px;
+            --border-radius-sm: 5px;
+            --border-color: var(--medium-gray);
+            --box-shadow-light: 0 2px 4px rgba(0, 0, 0, 0.05);
+            --box-shadow-medium: 0 4px 12px rgba(0, 0, 0, 0.08);
+            --box-shadow-card: 0 5px 15px rgba(0, 0, 0, 0.06);
+            --transition-speed: 0.2s ease-in-out;
+        }
+        html { font-size: 100%; }
+        body {
+            font-family: var(--font-family);
+            background-color: var(--light-gray);
+            color: var(--text-color);
+            line-height: var(--line-height-base);
+            padding: var(--spacing-lg);
+            font-size: var(--font-size-base);
+        }
+        .container {
+            max-width: 1200px;
+            margin: var(--spacing-lg) auto;
+            background-color: var(--white);
+            padding: var(--spacing-xl);
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow-medium);
+            border: 1px solid var(--border-color);
+        }
+
+        /* --- Page Header --- */
+        .page-header { text-align: center; margin-bottom: var(--spacing-xl); padding-bottom: var(--spacing-lg); border-bottom: 1px solid var(--border-color); }
+        h1 { font-size: 2rem; color: var(--secondary-color); margin-bottom: var(--spacing-xs); font-weight: 700; }
+        .subtitle { color: var(--text-muted); font-size: 1.1rem; font-weight: 400; }
+
+        /* --- Section Title --- */
+        h2.section-title { font-size: 1.3rem; color: var(--primary-color); padding-bottom: var(--spacing-sm); margin-top: var(--spacing-xl); margin-bottom: var(--spacing-lg); font-weight: 600; position: relative; display: inline-block; }
+        h2.section-title::after { content: ''; position: absolute; bottom: 0; left: 0; width: 50px; height: 3px; background-color: var(--primary-color); border-radius: 2px; }
+        .section-separator { border: 0; height: 1px; background-color: var(--border-color); margin: var(--spacing-xl) 0; }
+
+        /* --- File Upload Area --- */
+        .upload-section { padding: var(--spacing-xl); margin-bottom: var(--spacing-xl); border: 2px dashed var(--border-color); border-radius: var(--border-radius); text-align: center; background-color: var(--primary-light); transition: all var(--transition-speed); }
+        .upload-section.dragover { border-color: var(--primary-color); background-color: var(--white); box-shadow: 0 0 0 3px var(--primary-light); }
+        .upload-section .upload-icon { font-size: 3em; color: var(--primary-color); margin-bottom: var(--spacing-md); }
+        .upload-guidance { font-weight: 500; color: var(--secondary-color); margin-bottom: var(--spacing-md); font-size: 1.1rem; }
+        .file-input-container { position: relative; margin: var(--spacing-md) auto; max-width: 250px; }
+        .file-input-button { display: inline-flex; align-items: center; gap: var(--spacing-sm); padding: var(--spacing-sm) var(--spacing-lg); background-color: var(--primary-color); color: white; border: none; border-radius: var(--border-radius-sm); cursor: pointer; transition: background-color var(--transition-speed); font-weight: 500; font-size: var(--font-size-base); }
+        .file-input-button i { margin-right: var(--spacing-xs); }
+        .file-input-button:hover:not(:disabled) { background-color: var(--primary-hover); }
+        .file-input-button:disabled { opacity: 0.6; cursor: not-allowed; }
+        /* #csvFileInput is hidden via attribute */
+        #fileInfo { margin-top: var(--spacing-md); color: var(--text-muted); font-size: var(--font-size-sm); min-height: 1.5em; }
+
+        /* --- Dashboard --- */
+        .dashboard-header { display: flex; flex-wrap: wrap; /* Allow wrapping */ justify-content: space-between; align-items: center; margin-bottom: var(--spacing-lg); gap: var(--spacing-md); /* Add gap */ }
+        .dashboard-header h2 { margin: 0; flex-grow: 1; /* Allow title to take space */}
+        #generateReportBtn { background-color: var(--accent-color) !important; /* Use important to override default */ } /* Style for generate button */
+        #generateReportBtn:hover:not(:disabled) { background-color: #d48800 !important; /* Darker accent hover */ }
+
+        /* --- Summary Stats --- */
+        .summary-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: var(--spacing-lg); margin-bottom: var(--spacing-xl); }
+        .stat-item { background-color: var(--white); padding: var(--spacing-lg); border-radius: var(--border-radius); border: 1px solid var(--border-color); display: flex; flex-direction: column; align-items: center; text-align: center; box-shadow: var(--box-shadow-light); transition: transform var(--transition-speed), box-shadow var(--transition-speed), opacity 0.5s ease-in-out; opacity: 0; }
+        .stat-item:hover { transform: translateY(-3px); box-shadow: var(--box-shadow-card); }
+        .stat-item .stat-icon { font-size: 1.8em; margin-bottom: var(--spacing-md); color: var(--primary-color); line-height: 1; }
+        .stat-item h4 { margin-bottom: var(--spacing-xs); color: var(--label-color); font-size: var(--font-size-sm); font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+        .stat-item p { font-size: 1.9rem; font-weight: 700; color: var(--secondary-color); margin-bottom: 0; line-height: 1.2; }
+
+        /* --- Charts --- */
+        .chart-section { margin-top: var(--spacing-xl); }
+        .charts-grid-container { display: grid; grid-template-columns: 1fr; gap: var(--spacing-xl); }
+        @media (min-width: 992px) { .charts-grid-container { grid-template-columns: 1fr 1fr; } }
+        .chart-container { background-color: var(--white); padding: var(--spacing-lg); border-radius: var(--border-radius); border: 1px solid var(--border-color); box-shadow: var(--box-shadow-light); position: relative; min-height: 380px; display: flex; flex-direction: column; transition: box-shadow var(--transition-speed); }
+        .chart-container:hover { box-shadow: var(--box-shadow-card); }
+        .chart-container h4 { text-align: center; margin-bottom: var(--spacing-lg); color: var(--dark-gray); font-size: 1.1rem; font-weight: 600; }
+        .chart-canvas-wrapper { flex-grow: 1; position: relative; min-height: 250px; }
+        .chart-container canvas { max-width: 100%; max-height: 100%; display: block; }
+        .chart-placeholder { flex-grow: 1; display: flex; justify-content: center; align-items: center; color: var(--text-muted); font-style: italic; text-align: center; padding: var(--spacing-md); font-size: var(--font-size-sm); }
+
+        /* --- Footer --- */
+        .footer { text-align: center; margin-top: var(--spacing-xl); padding-top: var(--spacing-lg); border-top: 1px solid var(--border-color); color: var(--text-muted); font-size: var(--font-size-sm); }
+
+        /* --- Responsive Adjustments --- */
+        @media (max-width: 768px) { body { padding: var(--spacing-md); } .container { padding: var(--spacing-lg); margin: var(--spacing-sm) auto; } h1 { font-size: 1.8rem; } h2.section-title { font-size: 1.2rem; } .summary-stats { grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: var(--spacing-md); } .stat-item p { font-size: 1.6rem; } .chart-container { padding: var(--spacing-md); min-height: 320px; } .charts-grid-container { grid-template-columns: 1fr; } }
+        @media (max-width: 480px) { .summary-stats { grid-template-columns: 1fr 1fr; } .stat-item { padding: var(--spacing-md); } .stat-item p { font-size: 1.5rem; } .upload-section { padding: var(--spacing-lg); } }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header class="page-header">
+            <h1>Schmidt Hammer Dashboard</h1>
+            <p class="subtitle">Concrete Strength Analysis</p>
+        </header>
+
+        <!-- UPLOAD_SECTION_START -->
+        <section class="upload-section" id="uploadArea">
+             <div class="upload-icon"><i class="fa-solid fa-file-arrow-up"></i></div>
+             <p class="upload-guidance">Drag & drop your CSV file here or click to select</p>
+             <div class="file-input-container">
+                 <button type="button" class="file-input-button" onclick="document.getElementById('csvFileInput').click();">
+                      <i class="fa-solid fa-folder-open"></i> Choose File
+                 </button>
+                 <input type="file" id="csvFileInput" accept=".csv" hidden>
+             </div>
+             <p id="fileInfo">No file selected. Please upload a CSV from the calculator.</p>
+        </section>
+        <!-- UPLOAD_SECTION_END -->
+
+        <!-- Placeholder for Embedded Data -->
+        <script id="embeddedData" type="application/json" style="display: none;">
+            <!-- EMBEDDED_DATA_PLACEHOLDER -->
+        </script>
+
+        <!-- Main Dashboard Content -->
+        <main id="visualization-content" style="display: none;">
+            <header class="dashboard-header">
+                <h2 class="section-title">Results Overview</h2>
+                <!-- Generate Report Button -->
+                <button id="generateReportBtn" type="button" class="file-input-button" style="display: none;">
+                    <i class="fa-solid fa-download"></i> Generate Shareable Report
+                </button>
+            </header>
+
+            <section class="summary-stats">
+                <div class="stat-item"><div class="stat-icon"><i class="fa-solid fa-list-check"></i></div><h4>Total Tests</h4><p id="stat-total-tests">0</p></div>
+                <div class="stat-item"><div class="stat-icon"><i class="fa-solid fa-calculator"></i></div><h4>Overall Avg. (MPa)</h4><p id="stat-avg-mpa">N/A</p></div>
+                <div class="stat-item"><div class="stat-icon"><i class="fa-solid fa-arrow-trend-down"></i></div><h4>Min Strength (MPa)</h4><p id="stat-min-mpa">N/A</p></div>
+                <div class="stat-item"><div class="stat-icon"><i class="fa-solid fa-arrow-trend-up"></i></div><h4>Max Strength (MPa)</h4><p id="stat-max-mpa">N/A</p></div>
+            </section>
+
+            <hr class="section-separator">
+
+            <section class="chart-section">
+                <h2 class="section-title">Detailed Analysis</h2>
+                <div class="charts-grid-container">
+                    <div class="chart-container">
+                        <h4>Results Rating Distribution</h4>
+                        <div class="chart-canvas-wrapper"><canvas id="ratingPieChart"></canvas></div>
+                        <div id="ratingPiePlaceholder" class="chart-placeholder" style="display: none;"></div>
+                    </div>
+                    <div class="chart-container">
+                        <h4>Strength by Component Type</h4>
+                         <div class="chart-canvas-wrapper"><canvas id="componentStrengthChart"></canvas></div>
+                         <div id="componentStrengthPlaceholder" class="chart-placeholder" style="display: none;"></div>
+                    </div>
+                </div>
+                <div class="chart-container" style="margin-top: var(--spacing-xl);">
+                    <h4>Strength by Location</h4>
+                     <div class="chart-canvas-wrapper"><canvas id="locationStrengthChart"></canvas></div>
+                     <div id="locationStrengthPlaceholder" class="chart-placeholder" style="display: none;"></div>
+                </div>
+            </section>
+        </main>
+
+        <footer class="footer"><p>&copy; <span id="currentYear"></span> Schmidt Hammer Analysis Tool</p></footer>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // --- DOM Elements ---
+            const csvFileInput = document.getElementById('csvFileInput');
+            const fileInfo = document.getElementById('fileInfo');
+            const uploadSection = document.getElementById('uploadArea');
+            const visualizationContent = document.getElementById('visualization-content');
+            const embeddedDataElement = document.getElementById('embeddedData'); // Added
+            const generateReportBtn = document.getElementById('generateReportBtn'); // Added
+            const statTotalTests = document.getElementById('stat-total-tests');
+            const statAvgMpa = document.getElementById('stat-avg-mpa');
+            const statMinMpa = document.getElementById('stat-min-mpa');
+            const statMaxMpa = document.getElementById('stat-max-mpa');
+            const ratingPieCanvasEl = document.getElementById('ratingPieChart');
+            const componentStrengthCanvasEl = document.getElementById('componentStrengthChart');
+            const locationStrengthCanvasEl = document.getElementById('locationStrengthChart');
+            const ratingPieCtx = ratingPieCanvasEl ? ratingPieCanvasEl.getContext('2d') : null;
+            const componentStrengthCtx = componentStrengthCanvasEl ? componentStrengthCanvasEl.getContext('2d') : null;
+            const locationStrengthCtx = locationStrengthCanvasEl ? locationStrengthCanvasEl.getContext('2d') : null;
+            const ratingPiePlaceholder = document.getElementById('ratingPiePlaceholder');
+            const componentStrengthPlaceholder = document.getElementById('componentStrengthPlaceholder');
+            const locationStrengthPlaceholder = document.getElementById('locationStrengthPlaceholder');
+
+             if(!visualizationContent || !ratingPiePlaceholder || !componentStrengthPlaceholder || !locationStrengthPlaceholder || !generateReportBtn || !embeddedDataElement) { // Check new elements too
+                console.error("CRITICAL: Failed to find essential DOM elements for dashboard or report generation.");
+                return;
+            }
+
+            // --- Constants & State ---
+            const RATING_THRESHOLD_PSI = 2500;
+            let parsedData = [];
+            let chartInstances = { ratingPie: null, componentStrength: null, locationStrength: null };
+
+            // --- Chart Configuration (Using direct colors for stability) ---
+             const chartColors = {
+                primary: '#005f73', success: '#2a9d8f', danger: '#d00000', textMuted: '#88929b', gridColor: 'rgba(0, 0, 0, 0.05)', tooltipBackground: 'rgba(0, 0, 0, 0.8)', fontFamily: 'Inter, sans-serif',
+                categoryPalette: [ '#005f73', '#0a9396', '#94d2bd', '#e9d8a6', '#ee9b00', '#ca6702', '#bb3e03', '#ae2012' ]
+            };
+            Chart.defaults.font.family = chartColors.fontFamily;
+            Chart.defaults.color = chartColors.textMuted;
+            Chart.defaults.borderColor = chartColors.gridColor;
+
+            // --- Utility Functions ---
+            function displayChartPlaceholder(canvasEl, placeholderEl, message) { const wrapper = canvasEl ? canvasEl.closest('.chart-canvas-wrapper') : null; if (wrapper) wrapper.style.display = 'none'; if (placeholderEl) { placeholderEl.textContent = message; placeholderEl.style.display = 'flex'; } }
+            function hideChartPlaceholder(canvasEl, placeholderEl) { const wrapper = canvasEl ? canvasEl.closest('.chart-canvas-wrapper') : null; if (placeholderEl) placeholderEl.style.display = 'none'; if (wrapper) wrapper.style.display = 'block'; }
+            function getCategoricalColor(index) { return chartColors.categoryPalette[index % chartColors.categoryPalette.length]; }
+            function preventDefaults (e) { e.preventDefault(); e.stopPropagation(); }
+
+            // --- Event Handlers ---
+            function handleDrop(e) { const dt = e.dataTransfer; const files = dt.files; if (files.length > 0) { csvFileInput.files = files; handleFileSelect({ target: csvFileInput }); } }
+            function handleFileSelect(event) {
+                const file = event.target.files[0];
+                if (!file) { fileInfo.textContent = 'No file selected.'; visualizationContent.style.display = 'none'; generateReportBtn.style.display = 'none'; return; } // Hide btn
+                if (!file.type.match('text/csv') && !file.name.toLowerCase().endsWith('.csv') && file.type !== '') { alert('Invalid file type. Please select a CSV file.'); csvFileInput.value = ''; fileInfo.textContent = 'Please select a valid CSV file.'; visualizationContent.style.display = 'none'; generateReportBtn.style.display = 'none'; return; } // Hide btn
+                fileInfo.textContent = `Processing: ${file.name}...`; fileInfo.style.color = 'var(--text-muted)';
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const csvText = e.target.result;
+                    try {
+                        parsedData = parseCSV(csvText); // Use the robust parser
+                        if (parsedData.length > 0) {
+                            fileInfo.textContent = `Loaded: ${file.name} (${parsedData.length} tests)`; fileInfo.style.color = 'var(--success-color)';
+                            visualizationContent.style.display = 'block';
+                            updateVisualizations(parsedData);
+                            // Show and enable the Generate Report button
+                            generateReportBtn.style.display = 'inline-flex';
+                            generateReportBtn.onclick = generateStaticReport; // Assign click handler
+                            generateReportBtn.disabled = false;
+                            generateReportBtn.innerHTML = '<i class="fa-solid fa-download"></i> Generate Shareable Report';
+                        } else {
+                            alert("CSV processed, but no valid data rows found."); fileInfo.textContent = `File: ${file.name} (No valid data)`; fileInfo.style.color = 'var(--warning-color)'; visualizationContent.style.display = 'none'; generateReportBtn.style.display = 'none'; // Hide btn
+                        }
+                    } catch (parseError) {
+                        console.error("Error parsing CSV:", parseError); alert(`Error parsing CSV file: ${parseError.message}`); visualizationContent.style.display = 'none'; csvFileInput.value = ''; fileInfo.textContent = 'Error parsing file. Select a valid CSV.'; fileInfo.style.color = 'var(--danger-color)'; generateReportBtn.style.display = 'none'; // Hide btn
+                    }
+                };
+                reader.onerror = function(e) { console.error("Error reading file:", e); alert('Error reading the selected file.'); visualizationContent.style.display = 'none'; csvFileInput.value = ''; fileInfo.textContent = 'Error reading file.'; fileInfo.style.color = 'var(--danger-color)'; generateReportBtn.style.display = 'none'; }; // Hide btn
+                reader.readAsText(file);
+            }
+
+            // --- CSV Parsing Function (Robust version from previous steps) ---
+            function parseCSV(csvText) {
+                 const normalizedCsvText = csvText.replace(/^\uFEFF/, '').replace(/\r\n/g, '\n');
+                 const lines = normalizedCsvText.split('\n'); const data = [];
+                 if (lines.length < 2) { console.warn("CSV < 2 lines."); return data; }
+                 const expectedHeaders = [ "S.No.", "Structural Member", "Location on Grid", "Hammer Orientation","1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "Avg. Readings", "Schmidt Hammer Results (cylindrical) (MPa)", "Schmidt Hammer Results (cylindrical) (Psi)" ];
+                 const essentialHeaders = ["Structural Member", "Location on Grid", "Avg. Readings", "Schmidt Hammer Results (cylindrical) (Psi)", "Schmidt Hammer Results (cylindrical) (MPa)"];
+                 const headerLineRaw = lines[0].split(','); const headerLine = headerLineRaw.map(h => h.trim().replace(/^"|"$/g, ''));
+                 const headerIndices = {}; expectedHeaders.forEach(expectedH => { const lowerExpectedH = expectedH.toLowerCase(); const index = headerLine.findIndex(csvH => csvH.toLowerCase() === lowerExpectedH); if (index !== -1) headerIndices[expectedH] = index; });
+                 const missingEssential = essentialHeaders.filter(h => headerIndices[h] === undefined); if (missingEssential.length > 0) throw new Error(`Essential columns missing: ${missingEssential.join(', ')}`);
+                 for (let i = 1; i < lines.length; i++) {
+                     let line = lines[i].trim(); if (line === '' || line.startsWith('#') || line === ','.repeat(headerLine.length - 1)) continue;
+                     const splitCsvLine = (text) => { const result = []; let current = ''; let inQuotes = false; for (let j = 0; j < text.length; j++) { const char = text[j]; if (char === '"') { if (inQuotes && text[j + 1] === '"') { current += '"'; j++; } else { inQuotes = !inQuotes; } } else if (char === ',' && !inQuotes) { result.push(current.trim()); current = ''; } else { current += char; } } result.push(current.trim()); return result; };
+                     const parts = splitCsvLine(line); if (parts.length !== headerLine.length) { console.warn(`Row ${i+1} col mismatch`); continue; }
+                     try {
+                        const getValue = (headerName) => { const index = headerIndices[headerName]; return index !== undefined && index < parts.length ? (parts[index] || '') : ''; };
+                        const psiString = getValue("Schmidt Hammer Results (cylindrical) (Psi)").replace(/,/g, '').trim(); const psi = (psiString === 'N/A' || psiString === '') ? null : parseInt(psiString, 10);
+                        const mpaString = getValue("Schmidt Hammer Results (cylindrical) (MPa)").trim(); const mpa = (mpaString === 'N/A' || mpaString === '') ? null : parseFloat(mpaString);
+                        if (isNaN(psi) && psi !== null) { console.warn(`Row ${i+1} invalid PSI: ${psiString}`); continue; } if (isNaN(mpa) && mpa !== null) { console.warn(`Row ${i+1} invalid MPa: ${mpaString}`); continue; }
+                        const avgReadingString = getValue("Avg. Readings").trim(); const avgReading = (avgReadingString === '' || isNaN(parseFloat(avgReadingString))) ? NaN : parseFloat(avgReadingString);
+                        let minReading = NaN, maxReading = NaN; let minR = Infinity, maxR = -Infinity, validRFound = false; for (let k = 1; k <= 10; k++) { const readingHeader = `${k}`; const index = headerIndices[readingHeader]; if (index !== undefined && index < parts.length) { const readingString = (parts[index] || '').trim(); if (readingString !== '') { const reading = parseInt(readingString, 10); if (!isNaN(reading)){ minR = Math.min(minR, reading); maxR = Math.max(maxR, reading); validRFound = true; } } } } if(validRFound) { minReading = minR; maxReading = maxR; }
+                        let rating = "N/A"; if (psi !== null && !isNaN(psi)) { rating = psi < RATING_THRESHOLD_PSI ? "Doubtful" : "Satisfactory"; } else if (mpa !== null && !isNaN(mpa)) { const mpaThreshold = RATING_THRESHOLD_PSI / 145.038; rating = mpa < mpaThreshold ? "Doubtful" : "Satisfactory"; }
+                        const componentType = getValue("Structural Member").trim() || 'Unknown Component'; const location = getValue("Location on Grid").trim() || 'Unknown Location';
+                        if ((mpa !== null && !isNaN(mpa)) || (psi !== null && !isNaN(psi))) { data.push({ sNo: getValue("S.No.").trim(), componentType, location, angle: getValue("Hammer Orientation").trim() || 'N/A', avgReading, mpa, psi, rating, minReading, maxReading }); } else { console.warn(`Row ${i+1} skipped: No valid MPa/PSI.`); }
+                     } catch (e) { console.warn(`Error row ${i+1}: ${e.message}. Line: ${line}`); }
+                 } return data;
+             }
+
+            // --- Visualization Update Functions (Keep as is from last working version) ---
+            function updateVisualizations(data) { updateSummaryStats(data); renderCharts(data); const statItems = document.querySelectorAll('.stat-item'); statItems.forEach(item => item.style.opacity = '0'); setTimeout(() => statItems.forEach((item, index) => setTimeout(() => item.style.opacity = '1', index * 80)), 50); }
+            function updateSummaryStats(data) { const validMpaData = data.filter(item => item.mpa !== null && !isNaN(item.mpa)); const numTests = validMpaData.length; statTotalTests.textContent = data.length; if (numTests > 0) { const mpaValues = validMpaData.map(item => item.mpa); statAvgMpa.textContent = (mpaValues.reduce((sum, val) => sum + val, 0) / numTests).toFixed(1); statMinMpa.textContent = Math.min(...mpaValues).toFixed(1); statMaxMpa.textContent = Math.max(...mpaValues).toFixed(1); } else { statAvgMpa.textContent = 'N/A'; statMinMpa.textContent = 'N/A'; statMaxMpa.textContent = 'N/A'; } }
+            function renderCharts(data) {
+                const dataRowsWithMpa = data.filter(item => item.mpa !== null && !isNaN(item.mpa)); const dataRowsWithRating = data.filter(item => item.rating && item.rating !== 'N/A'); Object.keys(chartInstances).forEach(key => { if (chartInstances[key]) chartInstances[key].destroy(); chartInstances[key] = null; });
+                // Rating Donut Chart
+                try { if (!ratingPieCtx) throw new Error("Rating context missing"); if (dataRowsWithRating.length === 0) displayChartPlaceholder(ratingPieCanvasEl, ratingPiePlaceholder, "No rating data."); else { hideChartPlaceholder(ratingPieCanvasEl, ratingPiePlaceholder); const sCount = dataRowsWithRating.filter(r => r.rating === 'Satisfactory').length; const dCount = dataRowsWithRating.filter(r => r.rating === 'Doubtful').length; if (sCount > 0 || dCount > 0) { chartInstances.ratingPie = new Chart(ratingPieCtx, { type: 'doughnut', data: { labels: [`Satisfactory (≥${RATING_THRESHOLD_PSI} Psi / Equiv.)`, `Doubtful (<${RATING_THRESHOLD_PSI} Psi / Equiv.)`], datasets: [{ data: [sCount, dCount], backgroundColor: [chartColors.success, chartColors.danger], borderColor: '#fff', borderWidth: 2, hoverOffset: 4 }] }, options: { responsive: true, maintainAspectRatio: false, cutout: '65%', plugins: { legend: { position: 'bottom', labels:{ padding: 15, usePointStyle: true, boxWidth: 12, font: { size: 11 }}}, tooltip: { backgroundColor: chartColors.tooltipBackground, callbacks: { label: function(context) { let label = context.label || ''; if (label) { label = label.split('(')[0].trim(); } const value = context.raw; const total = context.chart.data.datasets[0].data.reduce((a, b) => a + b, 0); const percentage = total > 0 ? ((value / total) * 100).toFixed(1) + '%' : '0%'; return ` ${label}: ${value} (${percentage})`; }}}} } }); } else displayChartPlaceholder(ratingPieCanvasEl, ratingPiePlaceholder, "No results found."); } } catch (e) { console.error("Rating Chart Error:", e); displayChartPlaceholder(ratingPieCanvasEl, ratingPiePlaceholder, "Error: Rating Chart."); }
+                // Component Bar Chart
+                try { if (!componentStrengthCtx) throw new Error("Component context missing"); if (dataRowsWithMpa.length === 0) displayChartPlaceholder(componentStrengthCanvasEl, componentStrengthPlaceholder, "No MPa data."); else { const strengthByComp = dataRowsWithMpa.reduce((acc, row) => { const key = row.componentType||"Unknown"; if (!acc[key]) acc[key] = []; acc[key].push(row.mpa); return acc; }, {}); const compLabels = Object.keys(strengthByComp).sort(); if (compLabels.length === 0) displayChartPlaceholder(componentStrengthCanvasEl, componentStrengthPlaceholder, "No components."); else { hideChartPlaceholder(componentStrengthCanvasEl, componentStrengthPlaceholder); const compAvgData = compLabels.map(lbl => strengthByComp[lbl].reduce((s, v) => s + v, 0) / strengthByComp[lbl].length); chartInstances.componentStrength = new Chart(componentStrengthCtx, { type: 'bar', data: { labels: compLabels, datasets: [{ label: 'Avg Strength (MPa)', data: compAvgData, backgroundColor: compLabels.map((_, i) => getCategoricalColor(i) + 'B3'), borderColor: compLabels.map((_, i) => getCategoricalColor(i)), borderWidth: 1, borderRadius: 3 }] }, options: { responsive: true, maintainAspectRatio: false, indexAxis: 'y', scales: { x: { beginAtZero: true, title: { display: true, text: 'Avg Strength (MPa)', font: { weight: '500' } }, grid: { color: chartColors.gridColor } }, y: { grid: { display: false }, ticks: { font: { size: 11 } } } }, plugins: { legend: { display: false }, tooltip: { backgroundColor: chartColors.tooltipBackground, callbacks: { title: (tooltipItems) => `Component: ${tooltipItems[0].label}`, label: context => ` Avg Strength: ${context.formattedValue} MPa` } } } } }); } } } catch (e) { console.error("Component Chart Error:", e); displayChartPlaceholder(componentStrengthCanvasEl, componentStrengthPlaceholder, "Error: Component Chart."); }
+                // Location Bar Chart
+                try { if (!locationStrengthCtx) throw new Error("Location context missing"); if (dataRowsWithMpa.length === 0) displayChartPlaceholder(locationStrengthCanvasEl, locationStrengthPlaceholder, "No MPa data."); else { const strengthByLoc = dataRowsWithMpa.reduce((acc, row) => { const key = row.location||"Unknown"; if (!acc[key]) acc[key] = []; acc[key].push(row.mpa); return acc; }, {}); const locLabels = Object.keys(strengthByLoc).sort(); if (locLabels.length === 0) displayChartPlaceholder(locationStrengthCanvasEl, locationStrengthPlaceholder, "No locations."); else { hideChartPlaceholder(locationStrengthCanvasEl, locationStrengthPlaceholder); const locAvgData = locLabels.map(lbl => strengthByLoc[lbl].reduce((s, v) => s + v, 0) / strengthByLoc[lbl].length); chartInstances.locationStrength = new Chart(locationStrengthCtx, { type: 'bar', data: { labels: locLabels, datasets: [{ label: 'Avg Strength (MPa)', data: locAvgData, backgroundColor: locLabels.map((_, i) => getCategoricalColor(i + 2) + 'B3'), borderColor: locLabels.map((_, i) => getCategoricalColor(i + 2)), borderWidth: 1, borderRadius: 3 }] }, options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true, title: { display: true, text: 'Avg Strength (MPa)', font: { weight: '500' } }, grid: { color: chartColors.gridColor } }, x: { grid: { display: false }, ticks: { autoSkip: true, maxRotation: 45, font: { size: 11 } } } }, plugins: { legend: { display: false }, tooltip: { backgroundColor: chartColors.tooltipBackground, callbacks: { title: (tooltipItems) => `Location: ${tooltipItems[0].label}`, label: context => ` Avg Strength: ${context.formattedValue} MPa` } } } } }); } } } catch (e) { console.error("Location Chart Error:", e); displayChartPlaceholder(locationStrengthCanvasEl, locationStrengthPlaceholder, "Error: Location Chart."); }
+            }
+
+             // --- *** NEW: Static Report Generation Function *** ---
+             function generateStaticReport() {
+                 if (!parsedData || parsedData.length === 0) { alert("No data available to generate a report."); return; }
+                 console.log("Generating static report...");
+                 generateReportBtn.disabled = true; generateReportBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Generating...';
+
+                 try {
+                     let fullHtml = document.documentElement.outerHTML;
+                     const dataJsonString = JSON.stringify(parsedData, null, 2); // Pretty print JSON
+                     const dataPlaceholder = '<!-- EMBEDDED_DATA_PLACEHOLDER -->';
+                     const uploadStartMarker = '<!-- UPLOAD_SECTION_START -->';
+                     const uploadEndMarker = '<!-- UPLOAD_SECTION_END -->';
+
+                     // Inject data
+                     if (fullHtml.includes(dataPlaceholder)) {
+                         fullHtml = fullHtml.replace(dataPlaceholder, dataJsonString);
+                     } else { throw new Error("Failed to find data placeholder."); }
+
+                     // Remove upload section
+                     const startIndex = fullHtml.indexOf(uploadStartMarker);
+                     const endIndex = fullHtml.indexOf(uploadEndMarker);
+                     if (startIndex !== -1 && endIndex !== -1) {
+                         fullHtml = fullHtml.substring(0, startIndex) + fullHtml.substring(endIndex + uploadEndMarker.length);
+                     } else { console.warn("Could not find upload section markers."); }
+
+                     // Create and trigger download
+                     const blob = new Blob([fullHtml], { type: 'text/html' });
+                     const link = document.createElement('a');
+                     link.href = URL.createObjectURL(blob);
+                     // Suggest filename based on current date, or could use project name later
+                     const dateStr = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
+                     link.download = `Schmidt_Hammer_Report_${dateStr}.html`;
+                     document.body.appendChild(link); link.click(); document.body.removeChild(link);
+                     URL.revokeObjectURL(link.href);
+                     console.log("Report download triggered.");
+
+                     setTimeout(() => { generateReportBtn.disabled = false; generateReportBtn.innerHTML = '<i class="fa-solid fa-download"></i> Generate Shareable Report'; }, 1000);
+                 } catch (error) {
+                     console.error("Error generating static report:", error); alert("Error generating report: " + error.message);
+                     generateReportBtn.disabled = false; generateReportBtn.innerHTML = '<i class="fa-solid fa-download"></i> Generate Shareable Report';
+                 }
+             }
+
+            // --- Initialization Logic ---
+            function initializeDashboard() {
+                document.getElementById('currentYear').textContent = new Date().getFullYear();
+                let embeddedData = null;
+                if (embeddedDataElement && embeddedDataElement.textContent.trim() && embeddedDataElement.textContent.trim() !== '<!-- EMBEDDED_DATA_PLACEHOLDER -->') { // Check placeholder too
+                    try { embeddedData = JSON.parse(embeddedDataElement.textContent); console.log("Found embedded data."); } catch (e) { console.error("Failed to parse embedded JSON data:", e); alert("Error loading report data."); return; }
+                }
+
+                if (embeddedData && Array.isArray(embeddedData) && embeddedData.length > 0) {
+                    // Mode 1: Static Report
+                    parsedData = embeddedData;
+                    if (uploadSection) uploadSection.style.display = 'none';
+                    if (generateReportBtn) generateReportBtn.style.display = 'none'; // Hide button
+                    visualizationContent.style.display = 'block';
+                    updateVisualizations(parsedData);
+                } else {
+                    // Mode 2: Interactive Uploader
+                    console.log("Operating in file upload mode.");
+                    if (uploadSection) uploadSection.style.display = 'block';
+                    visualizationContent.style.display = 'none';
+                    if (generateReportBtn) generateReportBtn.style.display = 'none'; // Hide button initially
+                    if (csvFileInput && uploadSection) { // Setup listeners only if elements exist
+                        csvFileInput.addEventListener('change', handleFileSelect);
+                        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(evName => { uploadSection.addEventListener(evName, preventDefaults, false); document.body.addEventListener(evName, preventDefaults, false); });
+                        ['dragenter', 'dragover'].forEach(evName => uploadSection.addEventListener(evName, () => uploadSection.classList.add('dragover'), false));
+                        ['dragleave', 'drop'].forEach(evName => uploadSection.addEventListener(evName, () => uploadSection.classList.remove('dragover'), false));
+                        uploadSection.addEventListener('drop', handleDrop, false);
+                    } else { console.error("Upload elements missing, cannot initialize upload mode."); if(fileInfo) fileInfo.textContent = "Error: Upload components not found."; }
+                    hideChartPlaceholder(ratingPieCanvasEl, ratingPiePlaceholder); hideChartPlaceholder(componentStrengthCanvasEl, componentStrengthPlaceholder); hideChartPlaceholder(locationStrengthCanvasEl, locationStrengthPlaceholder);
+                }
+            }
+
+            // --- Run Initialization ---
+            initializeDashboard();
+
+        }); // End DOMContentLoaded
+    </script>
+</body>
+</html>
